@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ayanda African Oils - Harvest Forecast System</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .logo-img {
+            max-height: 80px;
+            width: auto;
+        }
+        .header-logo {
+            max-height: 60px;
+            width: auto;
+        }
+        .footer-logo {
+            max-height: 40px;
+            width: auto;
+        }
+        .sidebar-logo {
+            max-height: 50px;
+            width: auto;
+        }
+        .card-hover {
+            transition: transform 0.2s ease-in-out;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+        }
+        .oil-card {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            transition: all 0.3s ease;
+        }
+        .oil-card.selected {
+            border-color: #059669;
+            background-color: #f0fdf4;
+        }
+        .progress-bar {
+            height: 20px;
+            background-color: #e5e7eb;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #059669, #10b981);
+            transition: width 0.5s ease;
+        }
+        .weather-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .stats-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        .forecast-card {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+        .hidden {
+            display: none !important;
+        }
+        .admin-only {
+            display: none;
+        }
+        .user-only {
+            display: none;
+        }
+        .visible {
+            display: block !important;
+        }
+        .flex-visible {
+            display: flex !important;
+        }
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Login Screen -->
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50">
+        <div class="max-w-md w-full space-y-8 p-8 bg-white rounded-xl shadow-lg">
+            <div class="text-center">
+                <div class="logo-container mb-6">
+                    <img src="https://page1.genspark.site/v1/base64_upload/0a68274abd5d64d9d41e81ed272ee52f" alt="Ayanda African Oils" class="logo-img">
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900">Harvest Forecast System</h2>
+                <p class="text-gray-600 mt-2">Sign in to your account</p>
+            </div>
+            <form id="loginForm" class="mt-8 space-y-6">
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                    <input id="email" name="email" type="email" required 
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                    <input id="password" name="password" type="password" required 
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                </div>
+                <div>
+                    <button type="submit" 
+                            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        <i class="fas fa-sign-in-alt mr-2"></i>Sign in
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="mainDashboard" class="hidden">
+        <!-- Header -->
+        <header class="bg-white shadow-sm border-b">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center">
+                        <img src="https://page1.genspark.site/v1/base64_upload/0a68274abd5d64d9d41e81ed272ee52f" alt="Ayanda African Oils" class="header-logo mr-4">
+                        <h1 class="text-2xl font-bold text-gray-900">Harvest Forecast System</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span id="userEmail" class="text-sm text-gray-600"></span>
+                        <button id="logoutBtn" class="text-red-600 hover:text-red-800">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                <!-- Sidebar -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <div class="text-center mb-6">
+                            <img src="https://page1.genspark.site/v1/base64_upload/0a68274abd5d64d9d41e81ed272ee52f" alt="Ayanda African Oils" class="sidebar-logo mx-auto mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900">Profile Information</h3>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Distillery</label>
+                                <select id="distillerySelect" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                    <option value="">Select Distillery</option>
+                                    <option value="BFE">BFE</option>
+                                    <option value="Delft">Delft</option>
+                                    <option value="Drumnadrochit">Drumnadrochit</option>
+                                    <option value="Kenlei">Kenlei</option>
+                                    <option value="Kommetjie">Kommetjie</option>
+                                    <option value="Leaf">Leaf</option>
+                                    <option value="Ukushona">Ukushona</option>
+                                    <option value="Vorster">Vorster</option>
+                                    <option value="Windermere">Windermere</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Current Month</label>
+                                <input type="month" id="currentMonth" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                            </div>
+                        </div>
+
+                        <!-- Weather Data -->
+                        <div class="mt-6 p-4 weather-card rounded-lg">
+                            <h4 class="text-white font-semibold mb-2"><i class="fas fa-cloud-sun mr-2"></i>Weather Data</h4>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span>Temperature:</span>
+                                    <span id="temperature">22°C</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Rainfall:</span>
+                                    <span id="rainfall">15mm</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Humidity:</span>
+                                    <span id="humidity">65%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Progress -->
+                        <div class="mt-6">
+                            <h4 class="text-gray-700 font-semibold mb-2">Progress</h4>
+                            <div class="progress-bar">
+                                <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-1">Completed <span id="progressText">0/0</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Content -->
+                <div class="lg:col-span-3">
+                    <!-- Navigation Tabs -->
+                    <div class="bg-white rounded-lg shadow-md mb-6">
+                        <div class="border-b border-gray-200">
+                            <nav class="flex space-x-8 px-6">
+                                <button id="forecastTab" class="tab-button py-4 text-sm font-medium text-green-600 border-b-2 border-green-600">
+                                    <i class="fas fa-chart-line mr-2"></i>Forecast
+                                </button>
+                                <button id="reportsTab" class="tab-button py-4 text-sm font-medium text-gray-500 hover:text-gray-700">
+                                    <i class="fas fa-file-excel mr-2"></i>Reports
+                                </button>
+                                <button id="analyticsTab" class="tab-button py-4 text-sm font-medium text-gray-500 hover:text-gray-700">
+                                    <i class="fas fa-chart-bar mr-2"></i>Analytics
+                                </button>
+                                <button id="usersTab" class="tab-button admin-only py-4 text-sm font-medium text-gray-500 hover:text-gray-700">
+                                    <i class="fas fa-users mr-2"></i>Users
+                                </button>
+                            </nav>
+                        </div>
+                    </div>
+
+                    <!-- Forecast Tab -->
+                    <div id="forecastContent" class="tab-content">
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <h3 class="text-xl font-semibold mb-6"><i class="fas fa-seedling mr-2"></i>Select Oils for Forecasting</h3>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="oilsGrid">
+                                <!-- Oil cards will be populated by JavaScript -->
+                            </div>
+
+                            <div id="selectedOilsDetails" class="mt-8 space-y-6">
+                                <!-- Selected oils details will be populated by JavaScript -->
+                            </div>
+
+                            <div class="mt-8 flex justify-end">
+                                <button id="submitForecast" class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700">
+                                    <i class="fas fa-save mr-2"></i>Submit Forecast
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reports Tab -->
+                    <div id="reportsContent" class="tab-content hidden">
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <h3 class="text-xl font-semibold mb-6"><i class="fas fa-file-excel mr-2"></i>Generate Reports</h3>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                <div class="stats-card p-4 rounded-lg text-center">
+                                    <i class="fas fa-chart-line text-2xl mb-2"></i>
+                                    <h4 class="font-semibold">Total Forecast</h4>
+                                    <p class="text-2xl font-bold" id="totalForecast">0 kg</p>
+                                </div>
+                                <div class="forecast-card p-4 rounded-lg text-center">
+                                    <i class="fas fa-calendar-alt text-2xl mb-2"></i>
+                                    <h4 class="font-semibold">This Month</h4>
+                                    <p class="text-2xl font-bold" id="monthForecast">0 kg</p>
+                                </div>
+                                <div class="weather-card p-4 rounded-lg text-center">
+                                    <i class="fas fa-percentage text-2xl mb-2"></i>
+                                    <h4 class="font-semibold">Progress</h4>
+                                    <p class="text-2xl font-bold" id="overallProgress">0%</p>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <h4 class="font-semibold mb-3">Report Options</h4>
+                                    <div class="space-y-2">
+                                        <label class="flex items-center">
+                                            <input type="checkbox" class="mr-2" checked> Monthly Summary
+                                        </label>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" class="mr-2" checked> Oil Breakdown
+                                        </label>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" class="mr-2" checked> Timeline Progress
+                                        </label>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" class="mr-2"> Historical Comparison
+                                        </label>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold mb-3">Export Options</h4>
+                                    <div class="space-y-2">
+                                        <button id="exportExcel" class="w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700">
+                                            <i class="fas fa-file-excel mr-2"></i>Export to Excel
+                                        </button>
+                                        <button id="exportCSV" class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700">
+                                            <i class="fas fa-file-csv mr-2"></i>Export to CSV
+                                        </button>
+                                        <button id="exportPDF" class="w-full bg-red-600 text-white py-2 rounded-md hover:bg-red-700">
+                                            <i class="fas fa-file-pdf mr-2"></i>Export to PDF
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-6">
+                                <h4 class="font-semibold mb-3">Email Recipients</h4>
+                                <div class="flex flex-wrap gap-2">
+                                    <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="186a61797658796179767c797771746b367b7775">[email&#160;protected]</a></span>
+                                    <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="b3c0d2dfd6c0f3d2cad2ddd7d2dcdadfc09dd0dcde">[email&#160;protected]</a></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Analytics Tab -->
+                    <div id="analyticsContent" class="tab-content hidden">
+                        <div class="space-y-6">
+                            <div class="bg-white rounded-lg shadow-md p-6">
+                                <h3 class="text-xl font-semibold mb-4"><i class="fas fa-chart-bar mr-2"></i>Yield Forecast</h3>
+                                <div class="chart-container">
+                                    <canvas id="yieldChart"></canvas>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-lg shadow-md p-6">
+                                <h3 class="text-xl font-semibold mb-4"><i class="fas fa-chart-line mr-2"></i>Trend Analysis</h3>
+                                <div class="chart-container">
+                                    <canvas id="trendChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Users Tab (Admin Only) -->
+                    <div id="usersContent" class="tab-content admin-only hidden">
+                        <div class="space-y-6">
+                            <div class="bg-white rounded-lg shadow-md p-6">
+                                <div class="flex justify-between items-center mb-6">
+                                    <h3 class="text-xl font-semibold"><i class="fas fa-users mr-2"></i>User Management</h3>
+                                    <button id="addUserBtn" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
+                                        <i class="fas fa-plus mr-2"></i>Add User
+                                    </button>
+                                </div>
+
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Distillery</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Active</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="usersTableBody" class="bg-white divide-y divide-gray-200">
+                                            <!-- Users will be populated by JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="bg-white border-t mt-12">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center">
+                        <img src="https://page1.genspark.site/v1/base64_upload/0a68274abd5d64d9d41e81ed272ee52f" alt="Ayanda African Oils" class="footer-logo mr-4">
+                        <div>
+                            <p class="text-gray-600">&copy; 2024 Ayanda African Oils. All rights reserved.</p>
+                            <p class="text-sm text-gray-500">Harvest Forecast Management System</p>
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-500">
+                        <p>Version 1.0 | <a href="/cdn-cgi/l/email-protection#85f7fce4ebc5e4fce4ebe1e4eaece9f6abe6eae8" class="text-green-600 hover:text-green-800">Support</a></p>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Add User Modal -->
+    <div id="addUserModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold">Add New User</h3>
+                <button id="closeModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="addUserForm">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Email</label>
+                        <input type="email" id="newUserEmail" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Password</label>
+                        <input type="password" id="newUserPassword" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Distillery</label>
+                        <select id="newUserDistillery" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                            <option value="">Select Distillery</option>
+                            <option value="BFE">BFE</option>
+                            <option value="Delft">Delft</option>
+                            <option value="Drumnadrochit">Drumnadrochit</option>
+                            <option value="Kenlei">Kenlei</option>
+                            <option value="Kommetjie">Kommetjie</option>
+                            <option value="Leaf">Leaf</option>
+                            <option value="Ukushona">Ukushona</option>
+                            <option value="Vorster">Vorster</option>
+                            <option value="Windermere">Windermere</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" id="cancelAddUser" class="px-4 py-2 text-gray-600 hover:text-gray-800">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Add User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+        // Application State
+        let currentUser = null;
+        let isAdmin = false;
+        let selectedOils = [];
+        let userData = JSON.parse(localStorage.getItem('ayandaUsers')) || {};
+        let forecastData = JSON.parse(localStorage.getItem('ayandaForecasts')) || {};
+
+        // Oil types data
+        const oilTypes = [
+            'Tea Tree', 'E.Smithii', 'E.Radiata', 'E.Dives', 'E.Citriodora',
+            'Lemongrass', 'Citronella', 'Patchouli', 'Lemon Tea Tree',
+            'Niaouli', 'E.Globulus', 'Palmarossa', 'Lemon Verbena', 'Rosemary Verbenone'
+        ];
+
+        // Initialize default admin user
+        if (!userData['ryan@ayandaoils.com']) {
+            userData['ryan@ayandaoils.com'] = {
+                email: 'ryan@ayandaoils.com',
+                password: 'TeaTree@2024',
+                role: 'admin',
+                distillery: 'All',
+                createdAt: new Date().toISOString()
+            };
+            localStorage.setItem('ayandaUsers', JSON.stringify(userData));
+        }
+
+        // DOM Elements
+        const loginScreen = document.getElementById('loginScreen');
+        const mainDashboard = document.getElementById('mainDashboard');
+        const loginForm = document.getElementById('loginForm');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const userEmail = document.getElementById('userEmail');
+
+        // Tab elements
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set current month
+            const currentMonth = document.getElementById('currentMonth');
+            const now = new Date();
+            currentMonth.value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+
+            // Initialize oils grid
+            initializeOilsGrid();
+
+            // Initialize charts
+            initializeCharts();
+
+            // Initialize users table
+            initializeUsersTable();
+
+            // Simulate weather data
+            updateWeatherData();
+
+            // Event listeners
+            setupEventListeners();
+        });
+
+        // Login functionality
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if (userData[email] && userData[email].password === password) {
+                currentUser = userData[email];
+                isAdmin = currentUser.role === 'admin';
+                
+                // Update UI based on role
+                updateUIForRole();
+                
+                // Show main dashboard
+                loginScreen.classList.add('hidden');
+                mainDashboard.classList.remove('hidden');
+                
+                // Set user info
+                userEmail.textContent = currentUser.email;
+                
+                // Set distillery if user has one
+                if (currentUser.distillery && currentUser.distillery !== 'All') {
+                    document.getElementById('distillerySelect').value = currentUser.distillery;
+                    document.getElementById('distillerySelect').disabled = true;
+                }
+            } else {
+                alert('Invalid credentials. Please try again.');
+            }
+        });
+
+        // Logout functionality
+        logoutBtn.addEventListener('click', function() {
+            currentUser = null;
+            isAdmin = false;
+            selectedOils = [];
+            
+            // Reset forms
+            loginForm.reset();
+            
+            // Show login screen
+            mainDashboard.classList.add('hidden');
+            loginScreen.classList.remove('hidden');
+        });
+
+        // Update UI based on user role
+        function updateUIForRole() {
+            const adminElements = document.querySelectorAll('.admin-only');
+            const userElements = document.querySelectorAll('.user-only');
+            
+            if (isAdmin) {
+                adminElements.forEach(el => el.classList.add('visible'));
+                userElements.forEach(el => el.classList.remove('visible'));
+            } else {
+                adminElements.forEach(el => el.classList.remove('visible'));
+                userElements.forEach(el => el.classList.add('visible'));
+            }
+        }
+
+        // Initialize oils grid
+        function initializeOilsGrid() {
+            const oilsGrid = document.getElementById('oilsGrid');
+            oilsGrid.innerHTML = '';
+            
+            oilTypes.forEach(oil => {
+                const oilCard = document.createElement('div');
+                oilCard.className = 'oil-card cursor-pointer';
+                oilCard.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <input type="checkbox" class="oil-checkbox mr-3" value="${oil}">
+                            <span class="font-medium">${oil}</span>
+                        </div>
+                        <i class="fas fa-leaf text-green-500"></i>
+                    </div>
+                `;
+                
+                oilCard.addEventListener('click', function() {
+                    const checkbox = oilCard.querySelector('.oil-checkbox');
+                    checkbox.checked = !checkbox.checked;
+                    handleOilSelection(oil, checkbox.checked);
+                });
+                
+                oilsGrid.appendChild(oilCard);
+            });
+        }
+
+        // Handle oil selection
+        function handleOilSelection(oil, isSelected) {
+            const oilCard = document.querySelector(`input[value="${oil}"]`).closest('.oil-card');
+            
+            if (isSelected) {
+                selectedOils.push(oil);
+                oilCard.classList.add('selected');
+            } else {
+                selectedOils = selectedOils.filter(o => o !== oil);
+                oilCard.classList.remove('selected');
+            }
+            
+            updateSelectedOilsDetails();
+            updateProgress();
+        }
+
+        // Update selected oils details
+        function updateSelectedOilsDetails() {
+            const container = document.getElementById('selectedOilsDetails');
+            container.innerHTML = '';
+            
+            selectedOils.forEach(oil => {
+                const oilDetail = document.createElement('div');
+                oilDetail.className = 'border rounded-lg p-4 bg-gray-50';
+                oilDetail.innerHTML = `
+                    <h4 class="font-semibold text-lg mb-4">${oil}</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Type</label>
+                            <div class="flex space-x-4 mt-1">
+                                <label class="flex items-center">
+                                    <input type="radio" name="${oil}_type" value="organic" class="mr-2">
+                                    <span>Organic</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="${oil}_type" value="conventional" class="mr-2" checked>
+                                    <span>Conventional</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">January Forecast (kg)</label>
+                            <input type="number" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500" id="${oil}_january" placeholder="0">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Current Forecast (kg)</label>
+                            <input type="number" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500" id="${oil}_current" placeholder="0">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Already Harvested (kg)</label>
+                            <input type="number" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500" id="${oil}_harvested" placeholder="0">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Harvest Start Date</label>
+                            <input type="date" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500" id="${oil}_start_date">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Harvest End Date</label>
+                            <input type="date" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500" id="${oil}_end_date">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="flex justify-between text-sm text-gray-600">
+                            <span>Progress:</span>
+                            <span id="${oil}_progress">0%</span>
+                        </div>
+                        <div class="progress-bar mt-1">
+                            <div class="progress-fill" id="${oil}_progress_bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(oilDetail);
+            });
+        }
+
+        // Update progress
+        function updateProgress() {
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            
+            const totalOils = selectedOils.length;
+            const completedOils = selectedOils.filter(oil => {
+                const currentInput = document.getElementById(`${oil}_current`);
+                return currentInput && currentInput.value > 0;
+            }).length;
+            
+            const progressPercent = totalOils > 0 ? (completedOils / totalOils) * 100 : 0;
+            
+            progressFill.style.width = progressPercent + '%';
+            progressText.textContent = `${completedOils}/${totalOils}`;
+        }
+
+        // Tab functionality
+        function setupEventListeners() {
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const tabId = button.id.replace('Tab', '');
+                    switchTab(tabId);
+                });
+            });
+
+            // Submit forecast
+            document.getElementById('submitForecast').addEventListener('click', submitForecast);
+
+            // Export buttons
+            document.getElementById('exportExcel').addEventListener('click', () => exportData('excel'));
+            document.getElementById('exportCSV').addEventListener('click', () => exportData('csv'));
+            document.getElementById('exportPDF').addEventListener('click', () => exportData('pdf'));
+
+            // User management
+            document.getElementById('addUserBtn').addEventListener('click', () => {
+                document.getElementById('addUserModal').classList.remove('hidden');
+            });
+
+            document.getElementById('closeModal').addEventListener('click', () => {
+                document.getElementById('addUserModal').classList.add('hidden');
+            });
+
+            document.getElementById('cancelAddUser').addEventListener('click', () => {
+                document.getElementById('addUserModal').classList.add('hidden');
+            });
+
+            document.getElementById('addUserForm').addEventListener('submit', addUser);
+        }
+
+        function switchTab(tabId) {
+            // Update button states
+            tabButtons.forEach(button => {
+                button.classList.remove('text-green-600', 'border-green-600');
+                button.classList.add('text-gray-500');
+            });
+            
+            document.getElementById(tabId + 'Tab').classList.remove('text-gray-500');
+            document.getElementById(tabId + 'Tab').classList.add('text-green-600', 'border-green-600');
+            
+            // Update content visibility
+            tabContents.forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            document.getElementById(tabId + 'Content').classList.remove('hidden');
+        }
+
+        // Submit forecast
+        function submitForecast() {
+            const distillery = document.getElementById('distillerySelect').value;
+            const month = document.getElementById('currentMonth').value;
+            
+            if (!distillery || selectedOils.length === 0) {
+                alert('Please select a distillery and at least one oil.');
+                return;
+            }
+
+            const forecast = {
+                distillery: distillery,
+                month: month,
+                oils: [],
+                submittedAt: new Date().toISOString(),
+                submittedBy: currentUser.email
+            };
+
+            selectedOils.forEach(oil => {
+                const type = document.querySelector(`input[name="${oil}_type"]:checked`).value;
+                const januaryForecast = document.getElementById(`${oil}_january`).value || 0;
+                const currentForecast = document.getElementById(`${oil}_current`).value || 0;
+                const harvested = document.getElementById(`${oil}_harvested`).value || 0;
+                const startDate = document.getElementById(`${oil}_start_date`).value;
+                const endDate = document.getElementById(`${oil}_end_date`).value;
+
+                forecast.oils.push({
+                    name: oil,
+                    type: type,
+                    januaryForecast: parseFloat(januaryForecast),
+                    currentForecast: parseFloat(currentForecast),
+                    harvested: parseFloat(harvested),
+                    startDate: startDate,
+                    endDate: endDate,
+                    progress: harvested > 0 && currentForecast > 0 ? (harvested / currentForecast) * 100 : 0
+                });
+            });
+
+            // Save to localStorage
+            const key = `${distillery}_${month}`;
+            forecastData[key] = forecast;
+            localStorage.setItem('ayandaForecasts', JSON.stringify(forecastData));
+
+            alert('Forecast submitted successfully!');
+            
+            // Reset form
+            selectedOils = [];
+            document.querySelectorAll('.oil-checkbox').forEach(cb => cb.checked = false);
+            document.querySelectorAll('.oil-card').forEach(card => card.classList.remove('selected'));
+            updateSelectedOilsDetails();
+            updateProgress();
+        }
+
+        // Export data
+        function exportData(format) {
+            const data = Object.values(forecastData);
+            let content, filename, mimeType;
+
+            if (format === 'csv') {
+                content = generateCSV(data);
+                filename = `ayanda_forecast_${new Date().toISOString().split('T')[0]}.csv`;
+                mimeType = 'text/csv';
+            } else if (format === 'excel') {
+                content = generateCSV(data); // For simplicity, using CSV format
+                filename = `ayanda_forecast_${new Date().toISOString().split('T')[0]}.csv`;
+                mimeType = 'text/csv';
+            } else if (format === 'pdf') {
+                alert('PDF export feature coming soon!');
+                return;
+            }
+
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function generateCSV(data) {
+            const headers = ['Distillery', 'Month', 'Oil', 'Type', 'January Forecast', 'Current Forecast', 'Harvested', 'Start Date', 'End Date', 'Progress %', 'Submitted By', 'Submitted At'];
+            let csv = headers.join(',') + '\n';
+
+            data.forEach(forecast => {
+                forecast.oils.forEach(oil => {
+                    const row = [
+                        forecast.distillery,
+                        forecast.month,
+                        oil.name,
+                        oil.type,
+                        oil.januaryForecast,
+                        oil.currentForecast,
+                        oil.harvested,
+                        oil.startDate,
+                        oil.endDate,
+                        oil.progress.toFixed(1),
+                        forecast.submittedBy,
+                        forecast.submittedAt
+                    ];
+                    csv += row.join(',') + '\n';
+                });
+            });
+
+            return csv;
+        }
+
+        // Initialize charts
+        function initializeCharts() {
+            // Yield Chart
+            const yieldCtx = document.getElementById('yieldChart').getContext('2d');
+            new Chart(yieldCtx, {
+                type: 'bar',
+                data: {
+                    labels: oilTypes.slice(0, 8),
+                    datasets: [{
+                        label: 'Forecasted Yield (kg)',
+                        data: [1200, 800, 950, 600, 1100, 750, 900, 650],
+                        backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                        borderColor: 'rgba(16, 185, 129, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Monthly Yield Forecast by Oil Type'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Yield (kg)'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Trend Chart
+            const trendCtx = document.getElementById('trendChart').getContext('2d');
+            new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+                    datasets: [{
+                        label: 'Tea Tree',
+                        data: [1100, 1150, 1200, 1250, 1300, 1200, 1350],
+                        borderColor: 'rgba(16, 185, 129, 1)',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'E.Radiata',
+                        data: [800, 850, 900, 880, 920, 950, 980],
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Harvest Trend Over Time'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Yield (kg)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update weather data
+        function updateWeatherData() {
+            // Simulate weather data
+            document.getElementById('temperature').textContent = (20 + Math.random() * 10).toFixed(1) + '°C';
+            document.getElementById('rainfall').textContent = Math.floor(Math.random() * 30) + 'mm';
+            document.getElementById('humidity').textContent = Math.floor(60 + Math.random() * 30) + '%';
+        }
+
+        // User management
+        function initializeUsersTable() {
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = '';
+            
+            Object.values(userData).forEach(user => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10">
+                                <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                                    <i class="fas fa-user text-gray-600"></i>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">${user.email}</div>
+                                <div class="text-sm text-gray-500">${user.role}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${user.distillery}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.role === 'admin' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}">
+                            ${user.role}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${user.lastActive || 'Never'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        ${user.email !== 'ryan@ayandaoils.com' ? `
+                            <button class="text-red-600 hover:text-red-900" onclick="deleteUser('${user.email}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        ` : ''}
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function addUser(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('newUserEmail').value;
+            const password = document.getElementById('newUserPassword').value;
+            const distillery = document.getElementById('newUserDistillery').value;
+            
+            if (userData[email]) {
+                alert('User already exists!');
+                return;
+            }
+            
+            userData[email] = {
+                email: email,
+                password: password,
+                role: 'user',
+                distillery: distillery,
+                createdAt: new Date().toISOString()
+            };
+            
+            localStorage.setItem('ayandaUsers', JSON.stringify(userData));
+            
+            // Reset form and close modal
+            document.getElementById('addUserForm').reset();
+            document.getElementById('addUserModal').classList.add('hidden');
+            
+            // Refresh users table
+            initializeUsersTable();
+            
+            alert('User added successfully!');
+        }
+
+        function deleteUser(email) {
+            if (confirm(`Are you sure you want to delete ${email}?`)) {
+                delete userData[email];
+                localStorage.setItem('ayandaUsers', JSON.stringify(userData));
+                initializeUsersTable();
+                alert('User deleted successfully!');
+            }
+        }
+
+        // Update stats
+        function updateStats() {
+            const totalForecast = Object.values(forecastData).reduce((sum, forecast) => {
+                return sum + forecast.oils.reduce((oilSum, oil) => oilSum + oil.currentForecast, 0);
+            }, 0);
+            
+            document.getElementById('totalForecast').textContent = totalForecast.toLocaleString() + ' kg';
+            document.getElementById('monthForecast').textContent = Math.floor(totalForecast * 0.2).toLocaleString() + ' kg';
+            document.getElementById('overallProgress').textContent = Math.floor(Math.random() * 100) + '%';
+        }
+
+        // Update stats periodically
+        setInterval(updateStats, 5000);
+        updateStats();
+    </script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"959733dd1a2f739a","serverTiming":{"name":{"cfExtPri":true,"cfEdge":true,"cfOrigin":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}},"version":"2025.6.2","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
+</body>
+</html>
+    <script id="html_badge_script1">
+        window.__genspark_remove_badge_link = "https://www.genspark.ai/api/html_badge/" +
+            "remove_badge?token=To%2FBnjzloZ3UfQdcSaYfDv9wLgHtwIdHoCMTbvvgSAduje4LUunxrIskRWCeAzfBIxPUXMPzp44LUyspZe0TGiKvopH3IweT4xqmCO89UVhBN3ReABsAAvS4OLdBfoE5b2wt6McCre2AqQGzXI33hZ1YFB7pFwVp2swz2DiXjPnkDi38YwxywzUQ36pKqVdnowjVR9si69Q36HEtvFQpJsJpOefEuoNrQmgVMXPTz8YYHEw6uEvD%2Fxg3O0tLl2XpKCE5jG%2FLJQDdyvDAR2tYZZDNO96%2FAhVLCLXaKZOGhJaAZk%2Fg5aF6KHr7uXfZG7aCA0ImdprTQgi7xduCEF3BDPcZKO1jz6Jdykr4BG20BNQrIDEjRi%2BJdHXav90nlEbQmQqbktgDBzg9AvL8%2B4XdjdQP4aAxaiFFYwp6dDou08NF7CnsLDf%2BVjm5wyzvdEgc4EyfUXvFABU9zPfAhfPSoQ3Zi5kogTIrl%2BovSGfug2hAqTM12NcV0Oru1xj%2FE%2FR%2BeMUI4ueZ44GDDBbpRh6fNA%3D%3D";
+        window.__genspark_locale = "en-US";
+        window.__genspark_token = "To/BnjzloZ3UfQdcSaYfDv9wLgHtwIdHoCMTbvvgSAduje4LUunxrIskRWCeAzfBIxPUXMPzp44LUyspZe0TGiKvopH3IweT4xqmCO89UVhBN3ReABsAAvS4OLdBfoE5b2wt6McCre2AqQGzXI33hZ1YFB7pFwVp2swz2DiXjPnkDi38YwxywzUQ36pKqVdnowjVR9si69Q36HEtvFQpJsJpOefEuoNrQmgVMXPTz8YYHEw6uEvD/xg3O0tLl2XpKCE5jG/LJQDdyvDAR2tYZZDNO96/AhVLCLXaKZOGhJaAZk/g5aF6KHr7uXfZG7aCA0ImdprTQgi7xduCEF3BDPcZKO1jz6Jdykr4BG20BNQrIDEjRi+JdHXav90nlEbQmQqbktgDBzg9AvL8+4XdjdQP4aAxaiFFYwp6dDou08NF7CnsLDf+Vjm5wyzvdEgc4EyfUXvFABU9zPfAhfPSoQ3Zi5kogTIrl+ovSGfug2hAqTM12NcV0Oru1xj/E/R+eMUI4ueZ44GDDBbpRh6fNA==";
+    </script>
+    
+    <script id="html_notice_dialog_script" src="https://www.genspark.ai/notice_dialog.js"></script>
+    
